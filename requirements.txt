@@ -1,0 +1,10 @@
+pandas>=2.0.0
+numpy
+yfinance
+scipy
+streamlit
+plotly
+lxml
+requests
+pandas_ta
+yahooquery
