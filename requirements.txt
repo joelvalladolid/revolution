@@ -6,5 +6,5 @@ streamlit
 plotly
 lxml
 requests
-pandas_ta
+pandas-ta
 yahooquery
