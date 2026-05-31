@@ -1,0 +1,26 @@
+=== REPORTE DE TORNEO INTEGRADO ===
+Tiempo paralelo: 32.03 segundos
+Tareas exitosas: 90
+
+=== TOP 3 ESTRATEGIAS ===
+Puesto 1: AAPL | {'rsi_threshold': 20, 'sl_pct': 0.05, 'tp_pct': 0.05, 'ticker': 'AAPL'}
+   Score: 10.40/100
+   Win Rate: 87.50%
+   EV (Porcentaje por trade): 3.75%
+   Trades Totales: 8
+
+Puesto 2: VOO | {'rsi_threshold': 20, 'sl_pct': 0.08, 'tp_pct': 0.05, 'ticker': 'VOO'}
+   Score: 9.37/100
+   Win Rate: 87.50%
+   EV (Porcentaje por trade): 3.38%
+   Trades Totales: 8
+
+Puesto 3: AAPL | {'rsi_threshold': 20, 'sl_pct': 0.08, 'tp_pct': 0.05, 'ticker': 'AAPL'}
+   Score: 9.37/100
+   Win Rate: 87.50%
+   EV (Porcentaje por trade): 3.38%
+   Trades Totales: 8
+
+=== KELLY OPTIMIZER ===
+Pesos resultantes: [1. 0. 0.]
+Suma total: 1.000000
