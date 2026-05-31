@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quant Capital Allocation — Gemini Deep Research Prompt</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #080a0f;
+    --surface: #0d1117;
+    --surface2: #161b22;
+    --border: #21262d;
+    --accent: #00ff88;
+    --accent2: #0088ff;
+    --accent3: #ff6b35;
+    --text: #e6edf3;
+    --text-muted: #7d8590;
+    --text-dim: #484f58;
+    --gold: #ffd700;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* Grid bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* Header */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 40px;
+  }
+
+  .badge {
+    display: inline-block;
+    background: rgba(0,255,136,0.1);
+    border: 1px solid rgba(0,255,136,0.3);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  /* Copy button */
+  .copy-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px 6px 0 0;
+    padding: 10px 16px;
+    margin-top: 32px;
+  }
+
+  .copy-bar span {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .copy-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 8px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .copy-btn:hover { background: #00cc6a; transform: translateY(-1px); }
+  .copy-btn.copied { background: var(--accent2); }
+
+  /* Prompt box */
+  .prompt-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 32px;
+    white-space: pre-wrap;
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: #cdd9e5;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  /* Syntax highlights inside prompt */
+  .prompt-box .h1 { color: var(--accent); font-weight: 700; font-size: 14px; }
+  .prompt-box .h2 { color: var(--accent2); font-weight: 700; }
+  .prompt-box .h3 { color: var(--gold); font-weight: 500; }
+  .prompt-box .tag { color: var(--accent3); }
+  .prompt-box .formula { color: #c9d1d9; background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 2px; }
+  .prompt-box .note { color: var(--text-muted); font-style: italic; }
+
+  /* Stats bar */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .stat {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    display: block;
+  }
+
+  .stat-label {
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* Warning */
+  .warning {
+    margin-top: 24px;
+    background: rgba(255,107,53,0.08);
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 4px;
+    padding: 16px 20px;
+    color: #ff9a70;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+
+  .warning strong { color: var(--accent3); }
+
+  /* Scan line animation */
+  @keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  .scanline {
+    position: fixed;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(transparent, rgba(0,255,136,0.06), transparent);
+    animation: scan 8s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="container">
+
+  <div class="header">
+    <div class="badge">⬡ Quant Research System v2.0</div>
+    <h1>Capital Allocation<br><span>Deep Research Prompt</span></h1>
+    <p class="subtitle">// optimizado para Gemini Deep Research · pipeline de 5 fases · output accionable</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="stat-val">5</span><span class="stat-label">Fases</span></div>
+    <div class="stat"><span class="stat-val">32+</span><span class="stat-label">Métricas</span></div>
+    <div class="stat"><span class="stat-val">100%</span><span class="stat-label">Accionable</span></div>
+    <div class="stat"><span class="stat-val">0</span><span class="stat-label">Ambigüedad</span></div>
+  </div>
+
+  <div class="copy-bar">
+    <span>// PROMPT COMPLETO — COPIAR Y PEGAR EN GEMINI DEEP RESEARCH</span>
+    <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">⬡ Copiar Prompt</button>
+  </div>
+
+  <div class="prompt-box" id="promptContent">
+<span class="h1">═══════════════════════════════════════════════════════════════════════</span>
+<span class="h1">  SISTEMA QUANT DE INVESTIGACIÓN Y ASIGNACIÓN DE CAPITAL — VERSIÓN MÁXIMA</span>
+<span class="h1">  Para: Gemini Deep Research | Modo: Full Investigación + Ejecución</span>
+<span class="h1">═══════════════════════════════════════════════════════════════════════</span>
+
+<span class="h2">## ROL, MANDATO Y MODO OPERATIVO</span>
+
+Actúa como un equipo integrado de:
+  1. Quant Research Analyst (Wall Street, 15 años de experiencia)
+  2. Portfolio Manager (Hedge Fund long/short equity)
+  3. Risk Manager (VaR, CVaR, stress testing)
+  4. Behavioral Finance Specialist (sentiment, flows institucionales)
+  5. Econometrista (series de tiempo, backtesting estadístico riguroso)
+
+Tu misión es ejecutar una investigación exhaustiva y profunda que termine
+en un PLAN DE DESPLIEGUE DE CAPITAL con pesos exactos, montos en divisa,
+niveles de riesgo calculados y justificación estadística completa.
+
+NO puedes:
+  - Dar rangos vagos ("entre 10% y 30%")
+  - Omitir ninguna fase del pipeline
+  - Recomendar sin evidencia cuantificable
+  - Ignorar el riesgo de cartera total
+  - Usar datos sin especificar su fuente y fecha
+
+SÍ debes:
+  - Usar Google Search para obtener datos en tiempo real de precios,
+    volúmenes, EPS, revisiones de analistas y flujos sectoriales
+  - Acceder a fuentes como Yahoo Finance, Finviz, Macrotrends,
+    SEC EDGAR, Bloomberg Markets (páginas públicas), WSJ Markets,
+    Seeking Alpha, FRED (Federal Reserve), y similares
+  - Calcular, no estimar: si un dato no está disponible, indicarlo
+    explícitamente y usar el proxy más cercano disponible
+  - Documentar cada fuente con URL o referencia exacta
+
+<span class="tag">▸ VARIABLES DE ENTRADA DEL USUARIO (COMPLETAR ANTES DE EJECUTAR):</span>
+
+  Capital total a desplegar    : $[INSERTAR — ej. $10,000 USD]
+  Universo de análisis         : [S&P 500 completo / sector específico / lista custom]
+  Horizonte temporal           : [INSERTAR — ej. 15, 30 o 60 días calendario]
+  Perfil de riesgo             : [Conservador / Moderado / Agresivo]
+  Concentración máxima/activo  : [ej. 40%, 50%, 60%]
+  Sectores excluidos           : [ej. ninguno / energía fósil / tabaco]
+  Tipo de operación            : [Solo largo / Largo y corto / Solo ETFs]
+  Divisa de referencia         : [USD / EUR / MXN / otra]
+
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+<span class="h2">## FASE 0 — CONTEXTO MACRO Y DE MERCADO (PRE-FILTRO)</span>
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+
+Antes de analizar activos individuales, investiga y documenta el contexto
+macroeconómico actual. Esta fase determina el sesgo direccional del sistema.
+
+<span class="h3">0.1 — RÉGIMEN DE MERCADO ACTUAL</span>
+
+Busca y analiza:
+  - Posición actual del S&P 500 respecto a su SMA 200 (¿bull o bear regime?)
+  - VIX actual y percentil histórico (últimos 5 años)
+    → Si VIX > 25: reducir exposición total al 70% del capital planificado
+    → Si VIX > 35: reducir al 40% y alertar condición de estrés extremo
+  - Curva de rendimientos del Tesoro USA (2Y vs 10Y): invertida/normal/plana
+  - Spread HY credit (High Yield vs Investment Grade): señal de apetito de riesgo
+  - Put/Call Ratio del mercado (últimos 5 días): sentimiento extremo
+  - AAII Sentiment Survey más reciente: % bulls vs % bears
+
+Output 0.1:
+  ┌─────────────────────────────────────────────────────────┐
+  │ RÉGIMEN DE MERCADO                                      │
+  │ Tendencia macro: [ALCISTA / LATERAL / BAJISTA]          │
+  │ VIX actual: XX.X | Percentil: XX%                       │
+  │ Curva de rendimientos: [NORMAL / PLANA / INVERTIDA]     │
+  │ Sesgo del sistema: [RISK-ON / NEUTRAL / RISK-OFF]       │
+  │ Multiplicador de capital: X.XX (100% si condiciones OK) │
+  └─────────────────────────────────────────────────────────┘
+
+<span class="h3">0.2 — ROTACIÓN SECTORIAL Y FLUJOS INSTITUCIONALES</span>
+
+Investiga:
+  - Relative Strength de los 11 sectores GICS del S&P 500 (últimos 30 días)
+    usando ETFs sectoriales: XLK, XLF, XLV, XLE, XLC, XLY, XLP, XLI, XLB, XLRE, XLU
+  - Sectores con entrada neta de capital institucional (últimas 4 semanas)
+  - Dark pool activity en sectores líderes (si disponible públicamente)
+  - Earnings season: ¿en qué semana estamos? ¿qué sectores reportan próximamente?
+  - Temas macro con momentum: IA/semiconductores, defensa, biotech, energía, fintech
+
+Output 0.2:
+  Ranking de los 5 sectores con mayor momentum relativo, con flujo de capital
+  estimado y justificación basada en datos de ETFs (precio y volumen).
+
+<span class="h3">0.3 — CALENDARIO DE RIESGO INMEDIATO</span>
+
+Identifica en los próximos [HORIZONTE TEMPORAL] días:
+  - Fechas de decisión de la Fed (FOMC meeting dates)
+  - Publicaciones de inflación (CPI, PCE) y empleo (NFP)
+  - Earnings de mega-caps que afecten el índice (AAPL, NVDA, MSFT, GOOGL, AMZN, META)
+  - Eventos geopolíticos o vencimientos de opciones relevantes (OpEx dates)
+  - Subastas del Tesoro que puedan presionar yields
+
+Output 0.3:
+  Tabla de eventos con fecha, tipo, impacto esperado (Alto/Medio/Bajo) y
+  recomendación de gestión (reducir exposición / mantener / aumentar).
+
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+<span class="h2">## FASE 1 — SCREENING CUANTITATIVO: SELECCIÓN DE CANDIDATOS</span>
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+
+Objetivo: reducir el universo a 5–10 activos con señales técnicas,
+fundamentales y de sentimiento convergentes. Usar herramientas de búsqueda
+para verificar cada criterio con datos actuales.
+
+<span class="h3">1.1 — FILTROS TÉCNICOS (todos obligatorios)</span>
+
+Para cada activo candidato, verificar:
+
+  TENDENCIA:
+  ✓ Precio actual > SMA 50 días (tendencia de mediano plazo alcista)
+  ✓ Precio actual > SMA 200 días (tendencia de largo plazo alcista)
+  ✓ SMA 50 > SMA 200 (golden cross activo, no death cross)
+  ✓ Precio > máximo de los últimos 20 días (momentum de corto plazo)
+
+  MOMENTUM:
+  ✓ RSI(14) entre 50 y 72 (momentum positivo, no sobrecomprado extremo)
+  ✓ MACD: línea MACD > línea Signal (cruce alcista) + histograma positivo
+  ✓ MACD histograma creciente en las últimas 3 sesiones
+  ✓ Rate of Change (ROC-20) positivo
+
+  VOLUMEN Y PARTICIPACIÓN:
+  ✓ Volumen promedio últimas 5 sesiones > 1.3× promedio de 20 sesiones
+    (confirmación institucional de la tendencia)
+  ✓ On-Balance Volume (OBV) en tendencia alcista (nuevos máximos)
+  ✓ Accumulation/Distribution Line positiva y creciente
+
+  FUERZA DE TENDENCIA:
+  ✓ ADX(14) > 25 (tendencia con fuerza, no movimiento lateral)
+  ✓ +DI > -DI (dirección alcista confirmada)
+  ✓ ATR(14) / Precio < 3.5% (volatilidad manejable, no caótica)
+    → Activos con ATR/Precio > 5% solo para perfil Agresivo
+
+  ESTRUCTURA DE PRECIO:
+  ✓ No tiene resistencia mayor inmediata (< 2% sobre el precio actual)
+  ✓ Soporte claro identificado (base para stop loss)
+  ✓ Patrón técnico de continuación identificado (bandera alcista,
+    cup & handle, breakout de rango, pullback a SMA con rebote, etc.)
+
+<span class="h3">1.2 — FILTROS FUNDAMENTALES</span>
+
+  CRECIMIENTO:
+  ✓ EPS creciente YoY en los últimos 2 trimestres consecutivos
+  ✓ Revenue creciente YoY en los últimos 2 trimestres
+  ✓ Guidance del management positivo o reafirmado en último earnings call
+  ✓ Margen operativo estable o en expansión (últimos 2 trimestres)
+
+  CALIDAD:
+  ✓ Deuda/EBITDA < 3.5× (salud financiera, no exceso de apalancamiento)
+  ✓ Free Cash Flow positivo en los últimos 4 trimestres (FCF yield > 0)
+  ✓ ROE > 15% (eficiencia en uso del capital)
+  ✓ Current Ratio > 1.0 (liquidez a corto plazo)
+
+  VALORACIÓN RELATIVA:
+  ✓ P/E forward menor que el promedio del sector (no premium excesivo)
+  ✓ PEG Ratio < 2.0 (crecimiento no sobrevaluado)
+  ✓ EV/EBITDA < percentil 75 de su sector
+
+  CATALIZADORES:
+  ✓ Revisiones al alza de estimaciones de analistas (últimos 30 días)
+  ✓ Al menos 60% de analistas con rating Buy o Strong Buy
+  ✓ Precio objetivo de consenso > 10% sobre precio actual
+  ✓ Insider buying reciente (compras de directivos en SEC Form 4)
+    o recompra activa de acciones (buyback activo)
+
+<span class="h3">1.3 — FILTROS DE SENTIMIENTO Y POSICIONAMIENTO</span>
+
+  ✓ Short Interest < 5% del float (poca presión bajista de cortos)
+    → Bonus si Short Interest > 10% y precio sube: short squeeze potential
+  ✓ Opciones: Implied Volatility Rank (IVR) < 50 (opciones baratas = riesgo limitado)
+  ✓ Put/Call Ratio del activo individual < 0.7 (sesgo alcista en opciones)
+  ✓ Institucional ownership estable o creciente (últimas 2 ventanas 13F)
+  ✓ Score de noticias positivo en últimos 14 días (buscar en Google News)
+
+<span class="note">→ Un activo debe cumplir TODOS los criterios técnicos de 1.1, al menos
+   4 de 5 criterios en cada subgrupo de 1.2, y al menos 3 de 5 en 1.3.
+   Si menos de 3 activos pasan todos los filtros: reportar "MERCADO SIN
+   SEÑALES SUFICIENTES — MANTENER LIQUIDEZ" y detener el pipeline.</span>
+
+Output de Fase 1:
+  Tabla con todos los activos evaluados y un checkmark/X por criterio,
+  mostrando claramente los N finalistas que avanzan a Fase 2.
+
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+<span class="h2">## FASE 2 — ANÁLISIS PROBABILÍSTICO PROFUNDO Y RANKING</span>
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+
+Objetivo: para cada activo que pasó Fase 1, construir un perfil estadístico
+completo basado en comportamiento histórico bajo condiciones similares.
+
+<span class="h3">2.1 — WIN RATE HISTÓRICO BAJO CONDICIONES SIMILARES</span>
+
+Para cada activo, investigar y calcular:
+
+  a) Definir "condición similar": precio > SMA50 + SMA200, RSI 50-72,
+     MACD alcista, ADX > 25 (los mismos filtros de Fase 1)
+
+  b) Contar cuántas veces en los últimos 5 años el activo cumplió
+     simultáneamente estas condiciones
+
+  c) Calcular el retorno N días después (donde N = horizonte temporal)
+     en cada una de esas ocasiones
+
+  d) Win Rate = (número de ocasiones con retorno > 0) / (total de ocasiones)
+
+  e) Calcular adicionalmente:
+     - Win Rate con retorno > +3%
+     - Win Rate con retorno > +5%
+     - Win Rate con retorno > +10%
+     - Peor drawdown registrado en esas mismas condiciones
+
+  Umbral mínimo: Win Rate ≥ 55% para avanzar al ranking
+  → Si Win Rate < 55%: el activo avanza solo si EV > 1.5% (compensación)
+
+<span class="h3">2.2 — RATIO RETORNO/RIESGO HISTÓRICO (RR RATIO)</span>
+
+  Retorno Promedio Ganador (R+):
+    Promedio de todos los retornos positivos en el período de hold
+    bajo las condiciones definidas (ventana histórica 5 años)
+
+  Pérdida Promedio Perdedora (R-):
+    Promedio del valor absoluto de todos los retornos negativos
+    en el período de hold bajo las condiciones definidas
+
+  RR Ratio = R+ / |R-|
+
+  Umbrales:
+    RR < 1.5  → Activo descartado del ranking final
+    RR 1.5–2.0 → Peso reducido (máximo 20% del portafolio)
+    RR 2.0–3.0 → Peso estándar
+    RR > 3.0  → Peso aumentado (candidato a posición líder)
+
+<span class="h3">2.3 — EXPECTED VALUE (EV) POR OPERACIÓN</span>
+
+  Fórmula completa:
+  <span class="formula">EV = (WinRate × R+) − (LossRate × |R-|)</span>
+  donde LossRate = 1 − WinRate
+
+  EV ajustado por comisiones y slippage:
+  <span class="formula">EV_neto = EV − Comisión estimada − Slippage estimado</span>
+    Comisión estándar: 0.0% (brokers modernos) o la que aplique
+    Slippage estimado: 0.05% a 0.15% dependiendo de liquidez del activo
+
+  Solo activos con EV_neto > 0.5% avanzan al scoring final.
+  Si EV_neto entre 0% y 0.5%: posición reducida con advertencia.
+
+<span class="h3">2.4 — ANÁLISIS DE VOLATILIDAD Y DISTRIBUCIÓN DE RETORNOS</span>
+
+  Para cada activo, calcular o estimar:
+
+  a) Sharpe Ratio (últimos 90 días):
+     <span class="formula">Sharpe = (Retorno_activo − Rf) / Volatilidad_diaria × √252</span>
+     Rf = tasa libre de riesgo actual (yield del T-Bill a 3 meses)
+     Umbral mínimo: Sharpe > 0.5
+
+  b) Sortino Ratio (últimos 90 días):
+     <span class="formula">Sortino = (Retorno_activo − Rf) / Downside_Deviation × √252</span>
+     Penaliza solo la volatilidad bajista. Sharpe engaña en distribuciones asimétricas.
+     Umbral mínimo: Sortino > 0.8
+
+  c) Calmar Ratio (últimos 12 meses):
+     <span class="formula">Calmar = CAGR_activo / Max_Drawdown_activo</span>
+     Útil para evaluar eficiencia risk/reward en ventana más larga.
+
+  d) Beta respecto al S&P 500 (últimos 90 días):
+     Beta < 0.8 → Activo defensivo (menor riesgo sistémico)
+     Beta 0.8–1.2 → Activo moderado
+     Beta > 1.2 → Activo agresivo (amplifica movimientos del mercado)
+
+  e) Skewness y Kurtosis de retornos diarios (últimos 90 días):
+     Preferir activos con skewness positiva (más retornos grandes al alza)
+     Penalizar activos con kurtosis muy alta (colas gordas = riesgo de evento extremo)
+
+<span class="h3">2.5 — ANÁLISIS DE CORRELACIÓN ENTRE CANDIDATOS</span>
+
+  Construir matriz de correlación de retornos diarios (últimos 90 días)
+  entre todos los activos que pasaron Fase 1.
+
+  Regla de diversificación:
+    Si correlación entre activo A y B > 0.80:
+      → Conservar solo el de mayor Score combinado
+      → O reducir ambos pesos en 15% para preservar diversificación real
+    
+  Si correlación entre activo A y B > 0.90:
+      → Eliminar el de menor Score del ranking (redundancia total)
+
+  Objetivo: que el portafolio final tenga correlación promedio entre pares < 0.60
+
+<span class="h3">2.6 — ANÁLISIS DE MOMENTUM RELATIVO (RS RANK)</span>
+
+  Para cada activo finalista, calcular su Relative Strength vs S&P 500:
+  <span class="formula">RS = (Retorno_activo_N_días / Retorno_SP500_N_días) × 100</span>
+
+  Adicional: calcular el RS percentil vs todos los activos del universo
+  (idealmente vs el universo del S&P 500 completo o del sector).
+
+  RS Percentile > 80 → Fuerte momentum relativo (bonificación de +10% al Score)
+  RS Percentile 60–80 → Momentum positivo
+  RS Percentile < 60 → Momentum débil (penalización de −10% al Score)
+
+<span class="h3">2.7 — ANÁLISIS DE CATALIZADORES Y EVENTOS PRÓXIMOS</span>
+
+  Para cada activo finalista, investigar:
+
+  a) Próximo earnings date:
+     → Si earnings en los próximos [N/2] días: evaluar si mantener posición
+       Buscar historial: ¿sube o baja el activo el día después de earnings? (últimas 8 ocasiones)
+       Si "earnings surprise rate" > 70% positivo: bonificación de +5% al Score
+       Si el activo tiene tendencia a caer post-earnings: penalización −15%
+
+  b) Dividendos ex-date:
+     → Si ex-dividend date en el horizonte: ajustar precio objetivo
+
+  c) Próximos eventos corporativos:
+     → Inverstor Days, product launches, FDA approvals, M&A rumors (Google News)
+
+  d) Análisis de opciones (opciones como predictor):
+     → Implied Move del mercado de opciones para el horizonte temporal
+       (indica lo que el mercado de opciones "espera" de movimiento)
+       Si Implied Move > 15% en el horizonte: mayor riesgo, ajustar SL
+
+<span class="h3">2.8 — SCORING FINAL PONDERADO</span>
+
+  Calcular Score final (0–100) para cada activo con esta ponderación:
+
+  ┌────────────────────────────────────────────┬────────┐
+  │ Componente                                 │  Peso  │
+  ├────────────────────────────────────────────┼────────┤
+  │ Win Rate histórico (2.1)                   │  20%   │
+  │ Expected Value neto (2.3)                  │  20%   │
+  │ RR Ratio (2.2)                             │  15%   │
+  │ Sortino Ratio (2.4b)                       │  12%   │
+  │ Sharpe Ratio (2.4a)                        │  10%   │
+  │ Momentum Relativo / RS Rank (2.6)          │  10%   │
+  │ Calidad técnica combinada (1.1)            │   8%   │
+  │ Catalizadores próximos (2.7)               │   5%   │
+  └────────────────────────────────────────────┴────────┘
+
+  Multiplicadores de ajuste (aplicar al Score base):
+    × 1.15 si Skewness de retornos > 0 (distribución favorable)
+    × 0.85 si Beta > 1.5 en perfil Conservador
+    × 1.10 si RS Percentile > 85
+    × 0.80 si correlación alta con activo de mayor Score (penalización diversificación)
+    × 0.70 si tiene earnings en los próximos [N/3] días sin historial positivo
+
+Output de Fase 2:
+  Ranking completo con Score, Win Rate, EV, RR, Sortino, Beta y Catalizadores.
+  Identificar claramente Activo #1 (LÍDER) y sus fortalezas diferenciales.
+
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+<span class="h2">## FASE 3 — OPTIMIZACIÓN DE CARTERA: CAPITAL ALLOCATION</span>
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+
+<span class="h3">3.1 — ALGORITMO DE DISTRIBUCIÓN CONVEXA</span>
+
+  Paso 1: Normalizar Scores
+  <span class="formula">Peso_base(i) = Score(i) / Σ Score(j)  para j = 1 a N</span>
+
+  Paso 2: Aplicar convexidad para amplificar diferencias entre activos
+  <span class="formula">Peso_conv(i) = Peso_base(i)^α / Σ Peso_base(j)^α</span>
+
+  Donde α depende del perfil de riesgo:
+    Conservador: α = 1.2 (distribución más igualada)
+    Moderado:    α = 1.6 (concentración moderada en el líder)
+    Agresivo:    α = 2.2 (máxima concentración en mejores ideas)
+
+  Paso 3: Restricciones duras del sistema
+    MÁXIMO por activo: nunca superar el límite definido por el usuario
+    MÍNIMO por activo: nunca asignar menos del 5% (sin impacto real)
+    
+    Si Peso_conv(líder) > máximo permitido:
+      → Recortar exceso y redistribuir proporcionalmente entre los demás
+      → Redistribución proporcional según Peso_conv relativo de los demás
+    
+    Si Peso_conv(activo) < 5%:
+      → Eliminar el activo del portafolio final
+      → Redistribuir su peso entre los activos restantes
+
+  Paso 4: Multiplicar por el Multiplicador de Capital de Fase 0
+  <span class="formula">Capital_efectivo = Capital_total × Multiplicador_Fase0</span>
+  <span class="formula">Monto(i) = Peso_final(i) × Capital_efectivo</span>
+  <span class="formula">Liquidez_reservada = Capital_total − Capital_efectivo</span>
+
+<span class="h3">3.2 — CÁLCULO DE NIVELES DE GESTIÓN DE RIESGO</span>
+
+  Para cada posición, calcular:
+
+  ATR(14): Rango verdadero promedio de las últimas 14 sesiones
+    ATR_suavizado = máx(High-Low, |High-Close_prev|, |Low-Close_prev|) promediado 14 períodos
+
+  STOP LOSS:
+    Stop Loss Conservador: Precio_entrada − 1.5 × ATR(14)
+    Stop Loss Estándar:    Precio_entrada − 2.0 × ATR(14)  ← usar como default
+    Stop Loss Agresivo:    Precio_entrada − 2.5 × ATR(14)
+    
+    Validación adicional: el SL no debe quedar por debajo del soporte técnico
+    más cercano. Si ATR-based SL < soporte técnico, usar el soporte como referencia.
+
+  TAKE PROFIT:
+    TP primario:   Precio_entrada + (SL_distance × RR_ratio_activo)
+    TP secundario: Precio_entrada + (SL_distance × RR_ratio_activo × 1.5)
+    
+    Estrategia sugerida:
+      Cerrar 50% de la posición al llegar a TP primario
+      Dejar 50% con trailing stop para capturar movimiento extendido
+
+  RIESGO MONETARIO POR POSICIÓN:
+  <span class="formula">Riesgo($) = Monto_invertido × (SL_distance / Precio_entrada)</span>
+  → Documentar el riesgo máximo en dólares de cada posición
+
+<span class="h3">3.3 — VALIDACIÓN DE RIESGO DE CARTERA TOTAL</span>
+
+  Calcular y verificar:
+
+  a) Riesgo total de cartera:
+     <span class="formula">Riesgo_total = Σ Riesgo($) por posición</span>
+     Restricción dura: Riesgo_total ≤ 8% del Capital_total
+     → Si se supera: reducir proporcionalmente todos los tamaños de posición
+       hasta que Riesgo_total ≤ 8%
+
+  b) Value at Risk (VaR) de la cartera (95% confianza, horizonte temporal):
+     <span class="formula">VaR = Capital_efectivo × Portfolio_Volatility × Z(0.95) × √días</span>
+     donde Z(0.95) = 1.645 y Portfolio_Volatility = volatilidad ponderada
+     ajustada por correlaciones
+
+  c) Expected Shortfall / CVaR (condicional al superar VaR):
+     CVaR = pérdida esperada si el evento supera el umbral de VaR
+     (usar aproximación: CVaR ≈ VaR × 1.4 como proxy conservador)
+
+  d) Análisis de escenarios de stress:
+     → Escenario "Flash Crash" (caída de −8% en S&P500 en 1 día):
+       ¿Qué pérdida tendría la cartera? (usar Beta promedio ponderado)
+     → Escenario "Rally sostenido" (+5% en el horizonte):
+       ¿Qué ganancia tendría? (usar Win Rate y RR promedio)
+
+  e) Diversificación sectorial:
+     → Verificar que no más del 40% del capital esté en un solo sector GICS
+     → Si hay concentración excesiva, alertar y sugerir redistribución
+
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+<span class="h2">## FASE 4 — PLAN DE MONITOREO Y GESTIÓN ACTIVA</span>
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+
+<span class="h3">4.1 — SEÑALES DE INVALIDACIÓN (cuándo salir antes del plan)</span>
+
+  Para cada activo, definir las condiciones que invalidan la tesis:
+
+  SEÑALES DE SALIDA INMEDIATA (Exit en la siguiente apertura):
+  ✗ Precio cae por debajo del Stop Loss calculado
+  ✗ RSI(14) cae por debajo de 40 (pérdida de momentum)
+  ✗ MACD cruza a la baja la línea Signal con volumen alto
+  ✗ Precio cierra por debajo de la SMA 50 con volumen > 1.5× promedio
+  ✗ Earnings miss significativo (EPS real < estimado en > 10%)
+  ✗ Rebaja de rating de analista con nuevo precio objetivo < precio actual
+
+  SEÑALES DE MONITOREO ELEVADO (revisar cada 2 días):
+  ~ ADX cae por debajo de 20 (la tendencia pierde fuerza)
+  ~ Volumen decrece mientras el precio sube (divergencia de volumen)
+  ~ OBV diverge negativamente del precio
+  ~ RSI no confirma nuevos máximos de precio (divergencia bajista)
+
+<span class="h3">4.2 — PLAN DE AJUSTE DINÁMICO DEL PORTAFOLIO</span>
+
+  Reglas de gestión activa durante el horizonte:
+
+  a) Trailing Stop activación:
+     Una vez que la posición alcanza +1.5× el riesgo inicial en ganancia,
+     mover el Stop Loss al precio de entrada (posición "gratis de riesgo").
+     Una vez que alcanza +3× el riesgo inicial, activar trailing stop
+     con distancia de 1× ATR(14).
+
+  b) Piramidación (solo perfil Agresivo):
+     Si el activo sube > 3% sin tocar el SL y mantiene todas las señales,
+     se puede añadir hasta un 25% adicional de la posición original,
+     con nuevo SL basado en el ATR actualizado al momento de la adición.
+
+  c) Reducción preventiva pre-evento:
+     Si hay un evento de riesgo identificado en Fase 0.3 durante el hold,
+     reducir la posición en un 40% 2 días antes del evento y
+     reincorporar si el evento resulta positivo.
+
+  d) Revisión semanal obligatoria:
+     Cada [7 días]: recalcular RSI, MACD y ADX para cada posición.
+     Si alguna posición falla 2 de los 3 indicadores, reducir a la mitad.
+
+<span class="h3">4.3 — CRITERIO DE ÉXITO Y CIERRE DE POSICIÓN</span>
+
+  Condición de cierre planificado:
+  → Al llegar al horizonte temporal definido, cerrar todas las posiciones
+    al precio de mercado en la apertura del día siguiente al vencimiento.
+
+  Métricas de evaluación post-trade:
+    - Retorno total de la cartera (%)
+    - Retorno ponderado por riesgo (Retorno / Riesgo_total)
+    - Comparar vs benchmark (S&P 500 en el mismo período)
+    - Identificar cuál activo contribuyó más y cuál defraudó el modelo
+    - Documentar aprendizajes para siguiente iteración del sistema
+
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+<span class="h2">## FASE 5 — OUTPUT FINAL OBLIGATORIO: PLAN DE DESPLIEGUE</span>
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+
+Presentar el resultado en el siguiente formato exacto, sin omitir ningún campo:
+
+<span class="h3">5.1 — CONTEXTO MACRO Y CONDICIONES DEL SISTEMA</span>
+
+  Fecha de análisis: [HOY]
+  Régimen de mercado: [BULL / BEAR / LATERAL]
+  VIX: XX.X (Percentil histórico: XX%)
+  Sesgo del sistema: [RISK-ON / NEUTRAL / RISK-OFF]
+  Multiplicador de capital aplicado: X.XX
+  Sectores favorecidos: [Lista]
+  Principales riesgos macro identificados: [Lista con fechas]
+
+<span class="h3">5.2 — TABLA MAESTRA DE ASIGNACIÓN DE CAPITAL</span>
+
+  ┌───────────────────────────────────────────────────────────────────────────┐
+  │  PLAN DE DESPLIEGUE DE CAPITAL                                            │
+  │  Capital Total: $X,XXX | Capital Efectivo: $X,XXX | Liquidez: $XXX       │
+  │  Fecha: [HOY] | Horizonte: XX días | Perfil: [CONSERVADOR/MOD/AGRESIVO]  │
+  ├─────────┬───────┬─────────┬─────────┬────────┬────────┬──────┬───────────┤
+  │  Ticker │ Score │  Peso % │  Monto  │  SL $  │  TP1 $ │ TP2$ │ Riesgo $  │
+  ├─────────┼───────┼─────────┼─────────┼────────┼────────┼──────┼───────────┤
+  │  [#1]   │  XX   │  XX%    │ $X,XXX  │ $XX.XX │$XX.XX  │$XX.XX│   $XXX    │
+  │  [#2]   │  XX   │  XX%    │ $X,XXX  │ $XX.XX │$XX.XX  │$XX.XX│   $XXX    │
+  │  [#3]   │  XX   │  XX%    │ $X,XXX  │ $XX.XX │$XX.XX  │$XX.XX│   $XXX    │
+  │  [#4]   │  XX   │  XX%    │ $X,XXX  │ $XX.XX │$XX.XX  │$XX.XX│   $XXX    │
+  │  [#5]   │  XX   │  XX%    │ $X,XXX  │ $XX.XX │$XX.XX  │$XX.XX│   $XXX    │
+  │ LIQUIDEZ│   —   │  XX%    │ $X,XXX  │   —    │   —    │  —   │     —     │
+  ├─────────┴───────┴─────────┴─────────┴────────┴────────┴──────┴───────────┤
+  │  TOTAL  │       │  100%   │ $X,XXX  │        │        │      │   $XXX    │
+  └─────────────────────────────────────────────────────────────────────────-─┘
+
+<span class="h3">5.3 — MÉTRICAS DE CARTERA TOTAL</span>
+
+  Riesgo máximo de cartera     : $XXX (XX% del capital)
+  VaR 95% (horizonte temporal) : $XXX (XX% del capital)
+  CVaR estimado                : $XXX (XX% del capital)
+  EV ponderado esperado        : +X.X%
+  Win Rate ponderado esperado  : XX.X%
+  RR Ratio promedio ponderado  : X.X
+  Sharpe implícito de cartera  : X.XX
+  Beta promedio ponderado      : X.XX
+  Correlación promedio entre pares: X.XX
+  Escenario stress (−8% S&P)   : −$XXX (−X.X% cartera)
+  Escenario rally (+5% S&P)    : +$XXX (+X.X% cartera)
+
+<span class="h3">5.4 — ANÁLISIS DEL ACTIVO LÍDER (obligatorio, mínimo 300 palabras)</span>
+
+  Para el activo con Score más alto, elaborar un análisis detallado que cubra:
+
+  a) Por qué tiene el Score más alto: los 3–5 factores cuantitativos clave
+     que lo diferencian del resto de candidatos.
+
+  b) Tesis de inversión técnica: qué patrón técnico específico se está
+     explotando, qué nivel de precio es el trigger de entrada óptimo,
+     y por qué la estructura de precio favorece la tesis alcista.
+
+  c) Tesis de inversión fundamental: qué catalizador fundamental o
+     mejora de negocio sostiene el movimiento técnico (no es momentum
+     vacío, hay sustancia detrás).
+
+  d) Escenario bajista: qué condición específica invalidaría la tesis
+     y cuál sería el daño máximo si ocurre (ya cuantificado en el SL).
+
+  e) Historial en condiciones similares: citar 2–3 episodios históricos
+     concretos donde el activo se comportó de manera similar y el resultado.
+
+<span class="h3">5.5 — RESUMEN EJECUTIVO Y PLAN DE ACCIÓN INMEDIATA</span>
+
+  Para ejecutar esta estrategia HOY:
+
+  Orden 1: Comprar [Ticker] — [X acciones] a precio de mercado
+            Stop Loss en $XX.XX | TP1: $XX.XX | TP2: $XX.XX
+  Orden 2: Comprar [Ticker] — [X acciones] a precio de mercado
+            Stop Loss en $XX.XX | TP1: $XX.XX | TP2: $XX.XX
+  [... continuar para cada posición]
+
+  Liquidez reservada: $XXX en cuenta de efectivo (no invertir)
+  Revisión de posiciones: [FECHA = HOY + 7 días]
+  Cierre planificado: [FECHA = HOY + horizonte temporal]
+  Condición de cancelación total: Si S&P 500 cae > 3% en 1 día,
+    revisar todas las posiciones y activar stops si hay confirmación bajista.
+
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+<span class="h2">## RESTRICCIONES FINALES DEL SISTEMA</span>
+<span class="h2">═══════════════════════════════════════════════════════════════════════</span>
+
+R1. Si menos de 3 activos superan TODOS los filtros de Fase 1:
+    → Detener pipeline. Output: "MERCADO SIN SEÑALES — MANTENER LIQUIDEZ TOTAL."
+
+R2. Si VIX > 35 al inicio del análisis:
+    → Reducir capital efectivo al 30%. Resto en liquidez. Alertar modo defensivo.
+
+R3. Si el activo #1 tiene Win Rate < 55%:
+    → Reducir su peso máximo al 30%. Agregar advertencia explícita.
+
+R4. Si el EV neto de todos los activos < 0.5%:
+    → No ejecutar. "EDGE INSUFICIENTE — MERCADO NO FAVORECE LA ESTRATEGIA."
+
+R5. Si la correlación promedio de la cartera > 0.75:
+    → La "diversificación" es ilusoria. Alertar y sugerir reducir a 2–3 posiciones
+      más concentradas en lugar de muchas posiciones correlacionadas.
+
+R6. Transparencia de datos obligatoria:
+    → Para cada dato utilizado, especificar: fuente, fecha de extracción,
+      si es dato en tiempo real o estimación histórica.
+    → Nunca inventar datos. Si no están disponibles, decirlo explícitamente
+      y usar el mejor proxy disponible con la correspondiente advertencia.
+
+R7. Este framework es una herramienta analítica cuantitativa.
+    No constituye asesoramiento financiero regulado.
+    El usuario es el único responsable de sus decisiones de inversión.
+    Consultar con un asesor financiero certificado antes de invertir.
+
+<span class="h1">═══════════════════════════════════════════════════════════════════════</span>
+<span class="h1">  FIN DEL PROMPT — EJECUTAR TODAS LAS FASES EN ORDEN</span>
+<span class="h1">  USAR GOOGLE SEARCH EN CADA FASE PARA DATOS EN TIEMPO REAL</span>
+<span class="h1">═══════════════════════════════════════════════════════════════════════</span></div>
+
+  <div class="warning">
+    <strong>⚠ Aviso importante:</strong> Este framework es una herramienta de análisis cuantitativo educativa. Los mercados financieros implican riesgo de pérdida de capital. El rendimiento pasado no garantiza resultados futuros. No constituye asesoramiento financiero regulado. Consulta con un asesor financiero certificado antes de tomar decisiones de inversión.
+  </div>
+
+</div>
+
+<script>
+function copyPrompt() {
+  const btn = document.getElementById('copyBtn');
+  const content = document.getElementById('promptContent');
+
+  // Strip HTML tags to get clean text
+  const tmp = document.createElement('div');
+  tmp.innerHTML = content.innerHTML;
+  const text = tmp.innerText || tmp.textContent;
+
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '⬡ Copiar Prompt';
+      btn.classList.remove('copied');
+    }, 2500);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✓ Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '⬡ Copiar Prompt';
+      btn.classList.remove('copied');
+    }, 2500);
+  });
+}
+</script>
+</body>
+</html>
