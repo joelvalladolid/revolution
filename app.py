@@ -344,6 +344,8 @@ def get_fundamental_stars(ticker: str, tnx_yield: float, current_price: float, d
 def analyze_ticker_for_today(ticker: str, regime: str, tnx_yield: float,
                              start: str, end: str, force_fundamental: bool = False, scan_mode: str = "DIP") -> dict | None:
     try:
+        import time
+        time.sleep(1.0)
         df, ind_vals, price = get_ticker_technicals(ticker, start, end)
         if df is None: return None
 
@@ -1007,7 +1009,7 @@ if page == "📡 Radar S&P 500":
     def scan_worker(sid, tickers, current_regime, t_yield, s_date, e_date, mode_list):
         state = GLOBAL_SCANS[sid]
         
-        with ThreadPoolExecutor(max_workers=8) as ex:
+        with ThreadPoolExecutor(max_workers=1) as ex:
             futures = {}
             for t in tickers:
                 for m in mode_list:
