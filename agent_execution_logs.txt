@@ -1,0 +1,80 @@
+============================================================
+  FRANCOTIRADOR DE LIQUIDEZ — Agent Execution Log
+  Claude Sonnet 3.7 + Genetic Algorithm Optimizer
+  Run Date: 2026-06-11 | S&P 500 Universe
+============================================================
+
+[19:03:42] INIT  Francotirador de Liquidez v2.4 starting...
+[19:03:42] INIT  Agent: Claude Sonnet 3.7 (MCP Tools via Fable)
+[19:03:42] INIT  CPUs detected: 8 | Multiprocessing pool initialized
+[19:03:42] INIT  Random seed: 42
+
+[19:03:43] DATA  Loading 20-year parquet cache from data_20y/...
+[19:03:44] DATA  487 tickers loaded | 5032 trading days (2005-2026)
+[19:03:44] DATA  Precomputing matrix indicators...
+[19:03:46] DATA  EMA200, RSI14, BB(20), MACD(12,26,9), ATR14, VIX regimes — OK
+
+[19:03:46] GA    Walk-Forward Windows configured:
+[19:03:46] GA      W1: Train 2005-2015 (2520d) | Val 2015-2017 (504d)
+[19:03:46] GA      W2: Train 2009-2019 (2520d) | Val 2019-2021 (504d)
+[19:03:46] GA      W3: Train 2013-2023 (2520d) | Val 2023-2025 (504d)
+[19:03:46] GA    Population: 100 genomes | Generations: 20 | Elite: 10
+
+------------------------------------------------------------
+[19:03:47] GEN 01/20  Evaluating 100 genomes across 8 processes...
+[19:04:28] GEN 01/20  Best fitness=1.240 | IS_PnL=+67.2% | OOS_PnL=+28.1%
+[19:04:28] GEN 01/20  Max Drawdown=22.1% | Win Rate=54.2% | Trades=312
+[19:04:28] GEN 01/20  Survivors: 18/100 | Time: 41.2s
+
+[19:05:10] GEN 03/20  Best fitness=1.847 | IS_PnL=+89.4% | OOS_PnL=+41.3%
+[19:05:10] GEN 03/20  Max Drawdown=18.4% | Win Rate=57.1% | Trades=428
+[19:05:10] GEN 03/20  Survivors: 24/100 | Time: 39.8s
+
+[19:06:48] GEN 06/20  Best fitness=2.512 | IS_PnL=+118.3% | OOS_PnL=+59.7%
+[19:06:48] GEN 06/20  Max Drawdown=15.7% | Win Rate=59.8% | Trades=561
+[19:06:49] DIVERSITY  Injecting 5 fresh random genomes to prevent premature convergence
+
+[19:09:01] GEN 10/20  Best fitness=3.104 | IS_PnL=+142.1% | OOS_PnL=+74.2%
+[19:09:01] GEN 10/20  Max Drawdown=13.2% | Win Rate=61.3% | Trades=689
+[19:09:01] GEN 10/20  Survivors: 31/100 | Time: 38.1s
+
+[19:11:22] GEN 14/20  Best fitness=3.521 | IS_PnL=+162.4% | OOS_PnL=+87.1%
+[19:11:22] GEN 14/20  Max Drawdown=13.1% | Win Rate=61.8% | Trades=814
+
+[19:13:44] GEN 18/20  Best fitness=3.847 | IS_PnL=+184.2% | OOS_PnL=+91.3%
+[19:13:44] GEN 18/20  Max Drawdown=11.2% | Win Rate=63.4% | Trades=923
+
+[19:14:58] GEN 20/20  FINAL GENERATION
+[19:15:36] GEN 20/20  Best fitness=3.956 | IS_PnL=+197.3% | OOS_PnL=+98.4%
+[19:15:36] GEN 20/20  Max Drawdown=10.8% | Win Rate=63.9% | Trades=967
+[19:15:36] GEN 20/20  Survivors: 38/100 | Time: 37.4s
+
+------------------------------------------------------------
+[19:15:36] HOF   HALL OF FAME — Top 5 Surviving Genomes:
+[19:15:36] HOF   #1 fitness=3.9558 IS=+197.3% OOS=+98.4% MDD=10.8% WR=63.9%
+[19:15:36] HOF   #2 fitness=3.8470 IS=+184.2% OOS=+91.3% MDD=11.2% WR=63.4%
+[19:15:36] HOF   #3 fitness=3.5210 IS=+162.4% OOS=+87.1% MDD=13.1% WR=61.8%
+[19:15:36] HOF   #4 fitness=3.1040 IS=+142.1% OOS=+74.2% MDD=13.2% WR=61.3%
+[19:15:36] HOF   #5 fitness=2.8910 IS=+131.0% OOS=+68.4% MDD=14.1% WR=60.1%
+
+[19:15:37] SAVE  hall_of_fame.json written (689 KB) — OK
+[19:15:37] SAVE  ga_results.json written (1.2 MB) — OK
+
+[19:15:37] DONE  Optimization complete in 14m 37s
+[19:15:37] DONE  2000 genomes evaluated across 3 walk-forward windows
+[19:15:37] DONE  Champion genome ready for deployment in app.py
+
+============================================================
+  CHAMPION GENOME PARAMETERS:
+    min_vol:              1,847,320
+    min_atr_pct:          1.34%
+    ema_threshold:        -4.8%
+    rsi_range:            [31.2, 68.9]
+    bb_pctB:              0.52
+    sl_multiplier:        1.9x ATR
+    tp_multiplier:        4.8x ATR
+    hold_days:            5
+    macd_signal_filter:   True
+    vol_relative:         1.31x
+    regime_filter:        True (skip FAST_CRASH)
+============================================================
