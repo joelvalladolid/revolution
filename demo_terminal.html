@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Francotirador de Liquidez — Terminal Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d1117;
+    font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    color: #c9d1d9;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Top bar */
+  .topbar {
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red   { background: #ff5f57; }
+  .dot.yellow{ background: #febc2e; }
+  .dot.green { background: #28c840; }
+  .title {
+    color: #8b949e;
+    font-size: 12px;
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Terminal body */
+  .terminal {
+    flex: 1;
+    padding: 20px 24px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .line {
+    font-size: 13px;
+    line-height: 1.7;
+    opacity: 0;
+    white-space: pre;
+    animation: fadein 0.1s forwards;
+  }
+  @keyframes fadein { to { opacity: 1; } }
+
+  /* Colors */
+  .c-cyan    { color: #00e5ff; }
+  .c-green   { color: #3fb950; }
+  .c-yellow  { color: #e3b341; }
+  .c-red     { color: #f85149; }
+  .c-purple  { color: #d2a8ff; }
+  .c-gray    { color: #8b949e; }
+  .c-white   { color: #f0f6fc; }
+  .c-orange  { color: #ffa657; }
+  .c-dim     { color: #484f58; }
+
+  /* Prompt */
+  .prompt { color: #3fb950; }
+  .cmd    { color: #79c0ff; }
+
+  /* Progress bar */
+  .progress-wrap {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; line-height: 1.7;
+    opacity: 0; animation: fadein 0.1s forwards;
+  }
+  .bar-bg {
+    width: 200px; height: 10px;
+    background: #21262d;
+    border-radius: 5px; overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 5px;
+    background: linear-gradient(90deg, #00e5ff, #7c3aed);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  /* Cursor blink */
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: #00e5ff;
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Scoreboard table */
+  .scoreboard {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #8b949e;
+  }
+  .scoreboard .row { display: flex; gap: 0; line-height: 1.6; }
+  .col1 { width: 80px;  color: #e3b341; }
+  .col2 { width: 120px; color: #3fb950; }
+  .col3 { width: 100px; color: #f85149; }
+  .col4 { width: 100px; color: #00e5ff; }
+  .col5 { width: 80px;  color: #d2a8ff; }
+
+  /* HoF box */
+  .hof-box {
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin-top: 6px;
+    background: #161b22;
+    opacity: 0;
+    animation: fadein 0.2s forwards;
+  }
+  .hof-title { color: #ffd700; font-size: 13px; margin-bottom: 6px; }
+  .hof-row   { font-size: 12px; line-height: 1.8; }
+
+  #cursor-line { display: flex; align-items: center; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="dots">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+  </div>
+  <div class="title">⚡ revolution/lab — python run_ga_optimizer.py</div>
+</div>
+
+<div class="terminal" id="term"></div>
+
+<script>
+const term = document.getElementById('term');
+let totalDelay = 0;
+
+// Helper: append a line after `delay` ms
+function line(html, delay, extraClass='') {
+  totalDelay += delay;
+  setTimeout(() => {
+    const d = document.createElement('div');
+    d.className = 'line ' + extraClass;
+    d.style.animationDelay = '0s';
+    d.innerHTML = html;
+    term.appendChild(d);
+    term.scrollTop = term.scrollHeight;
+  }, totalDelay);
+}
+
+// Progress bar
+function progressBar(label, duration, color='#00e5ff') {
+  totalDelay += 200;
+  const start = totalDelay;
+  setTimeout(() => {
+    const wrap = document.createElement('div');
+    wrap.className = 'progress-wrap';
+    wrap.innerHTML = `
+      <span class="c-gray">${label}</span>
+      <div class="bar-bg"><div class="bar-fill" id="pb-${start}" style="background:linear-gradient(90deg,${color},#7c3aed)"></div></div>
+      <span class="c-cyan" id="pct-${start}">0%</span>`;
+    term.appendChild(wrap);
+    term.scrollTop = term.scrollHeight;
+
+    let pct = 0;
+    const steps = 30;
+    const interval = duration / steps;
+    const iv = setInterval(() => {
+      pct = Math.min(100, pct + (100/steps) + (Math.random()*2-1));
+      document.getElementById(`pb-${start}`).style.width = pct + '%';
+      document.getElementById(`pct-${start}`).textContent = Math.floor(pct) + '%';
+      if (pct >= 100) clearInterval(iv);
+    }, interval);
+  }, totalDelay);
+  totalDelay += duration;
+}
+
+function blank(delay=80) { line('', delay); }
+
+// ─── SCRIPT ───────────────────────────────────────────────
+
+line(`<span class="prompt">alumno@revolution:~/lab$</span> <span class="cmd">python run_ga_optimizer.py</span>`, 300);
+blank(400);
+
+line(`<span class="c-purple">⚡ Francotirador de Liquidez — Genetic Algorithm Optimizer</span>`, 0);
+line(`<span class="c-gray">   Version 2.4 · Claude Sonnet 3.7 · Walk-Forward Validated</span>`, 50);
+blank(200);
+
+line(`<span class="c-gray">[INIT]</span> Inicializando algoritmo genetico...`, 100);
+line(`<span class="c-gray">[INIT]</span> Semilla aleatoria: <span class="c-yellow">42</span>  |  CPUs detectadas: <span class="c-cyan">8</span>  |  Pool: <span class="c-cyan">multiprocessing</span>`, 100);
+blank(100);
+
+line(`<span class="c-gray">[DATA]</span> Cargando cache parquet <span class="c-cyan">data_20y/</span> ...`, 200);
+progressBar('Leyendo .parquet (487 tickers)', 1400, '#00e5ff');
+blank(100);
+line(`<span class="c-green">[OK]</span>   5032 dias cargados · <span class="c-yellow">487 tickers</span> · 2005-2026`, 100);
+line(`<span class="c-gray">[CALC]</span> Precalculando indicadores matriciales ...`, 100);
+progressBar('EMA200 · RSI14 · BB · MACD · ATR14 · VIX', 1200, '#7c3aed');
+line(`<span class="c-green">[OK]</span>   Indicadores listos · <span class="c-yellow">6 matrices</span> en memoria`, 100);
+blank(150);
+
+line(`<span class="c-gray">────────────────────────────────────────────────────────────────</span>`, 100);
+line(`<span class="c-white">  WALK-FORWARD WINDOWS:</span>`, 80);
+line(`<span class="c-gray">   W1: Train 2005-2015  |  Val 2015-2017  (2520 dias train)</span>`, 50);
+line(`<span class="c-gray">   W2: Train 2009-2019  |  Val 2019-2021  (2520 dias train)</span>`, 50);
+line(`<span class="c-gray">   W3: Train 2013-2023  |  Val 2023-2025  (2520 dias train)</span>`, 50);
+line(`<span class="c-gray">────────────────────────────────────────────────────────────────</span>`, 80);
+blank(200);
+
+line(`<span class="c-yellow">[GEN 01/20]</span> Evaluando <span class="c-cyan">100</span> genomas en <span class="c-cyan">8</span> procesos paralelos ...`, 200);
+progressBar('Generacion 1/20', 1200, '#e3b341');
+line(`<span class="c-green">  Elite:</span> fitness=<span class="c-cyan">1.240</span>  IS_PnL=<span class="c-green">+67%</span>  OOS_PnL=<span class="c-green">+28%</span>  MDD=<span class="c-red">22.1%</span>  WR=<span class="c-purple">54.2%</span>  Trades=<span class="c-gray">312</span>`, 100);
+line(`<span class="c-gray">  Supervivientes: 18/100 · Generacion 1 en <span class="c-yellow">41.2s</span></span>`, 80);
+blank(100);
+
+line(`<span class="c-yellow">[GEN 03/20]</span> Evaluando <span class="c-cyan">100</span> genomas ...`, 150);
+progressBar('Generacion 3/20', 1000, '#e3b341');
+line(`<span class="c-green">  Elite:</span> fitness=<span class="c-cyan">1.847</span>  IS_PnL=<span class="c-green">+89%</span>  OOS_PnL=<span class="c-green">+41%</span>  MDD=<span class="c-red">18.4%</span>  WR=<span class="c-purple">57.1%</span>  Trades=<span class="c-gray">428</span>`, 100);
+line(`<span class="c-gray">  Supervivientes: 24/100 · Generacion 3 en <span class="c-yellow">39.8s</span></span>`, 80);
+blank(100);
+
+line(`<span class="c-yellow">[GEN 06/20]</span> Evaluando <span class="c-cyan">100</span> genomas ...`, 150);
+progressBar('Generacion 6/20', 900, '#e3b341');
+line(`<span class="c-green">  Elite:</span> fitness=<span class="c-cyan">2.512</span>  IS_PnL=<span class="c-green">+118%</span>  OOS_PnL=<span class="c-green">+59%</span>  MDD=<span class="c-red">15.7%</span>  WR=<span class="c-purple">59.8%</span>  Trades=<span class="c-gray">561</span>`, 100);
+line(`<span class="c-dim">  [DIVERSIDAD] Inyectando 5 genomas frescos para evitar convergencia prematura</span>`, 80);
+blank(100);
+
+line(`<span class="c-yellow">[GEN 10/20]</span> Evaluando <span class="c-cyan">100</span> genomas ...`, 150);
+progressBar('Generacion 10/20', 900, '#ffa657');
+line(`<span class="c-green">  Elite:</span> fitness=<span class="c-cyan">3.104</span>  IS_PnL=<span class="c-green">+142%</span>  OOS_PnL=<span class="c-green">+74%</span>  MDD=<span class="c-red">13.2%</span>  WR=<span class="c-purple">61.3%</span>  Trades=<span class="c-gray">689</span>`, 100);
+line(`<span class="c-gray">  Supervivientes: 31/100 · Generacion 10 en <span class="c-yellow">38.1s</span></span>`, 80);
+blank(100);
+
+line(`<span class="c-yellow">[GEN 14/20]</span> Evaluando <span class="c-cyan">100</span> genomas ...`, 150);
+progressBar('Generacion 14/20', 900, '#ffa657');
+line(`<span class="c-green">  Elite:</span> fitness=<span class="c-cyan">3.521</span>  IS_PnL=<span class="c-green">+162%</span>  OOS_PnL=<span class="c-green">+87%</span>  MDD=<span class="c-red">13.1%</span>  WR=<span class="c-purple">61.8%</span>  Trades=<span class="c-gray">814</span>`, 100);
+blank(100);
+
+line(`<span class="c-yellow">[GEN 18/20]</span> Evaluando <span class="c-cyan">100</span> genomas ...`, 150);
+progressBar('Generacion 18/20', 900, '#3fb950');
+line(`<span class="c-green">  Elite:</span> fitness=<span class="c-cyan">3.847</span>  IS_PnL=<span class="c-green">+184%</span>  OOS_PnL=<span class="c-green">+91%</span>  MDD=<span class="c-red">11.2%</span>  WR=<span class="c-purple">63.4%</span>  Trades=<span class="c-gray">923</span>`, 100);
+blank(100);
+
+line(`<span class="c-yellow">[GEN 20/20]</span> Ultima generacion ...`, 150);
+progressBar('Generacion 20/20 — FINAL', 900, '#3fb950');
+line(`<span class="c-green">  Elite:</span> fitness=<span class="c-cyan">3.956</span>  IS_PnL=<span class="c-green">+197%</span>  OOS_PnL=<span class="c-green">+98%</span>  MDD=<span class="c-red">10.8%</span>  WR=<span class="c-purple">63.9%</span>  Trades=<span class="c-gray">967</span>`, 100);
+blank(150);
+
+line(`<span class="c-gray">════════════════════════════════════════════════════════════════</span>`, 200);
+line(`<span class="c-yellow">🏆  HALL OF FAME — TOP 5 GENOMAS SUPERVIVIENTES</span>`, 100);
+line(`<span class="c-gray">════════════════════════════════════════════════════════════════</span>`, 80);
+blank(100);
+
+const hofRows = [
+  ['#1', 'fit=3.956', 'IS=+197%', 'OOS=+98%', 'WR=63.9%'],
+  ['#2', 'fit=3.847', 'IS=+184%', 'OOS=+91%', 'WR=63.4%'],
+  ['#3', 'fit=3.521', 'IS=+162%', 'OOS=+87%', 'WR=61.8%'],
+  ['#4', 'fit=3.104', 'IS=+142%', 'OOS=+74%', 'WR=61.3%'],
+  ['#5', 'fit=2.891', 'IS=+131%', 'OOS=+68%', 'WR=60.1%'],
+];
+hofRows.forEach(([rank, fit, is, oos, wr], i) => {
+  line(`  <span class="c-yellow">${rank}</span>  <span class="c-cyan">${fit}</span>  <span class="c-green">${is}</span>  <span class="c-orange">${oos}</span>  <span class="c-purple">${wr}</span>`, 120);
+});
+
+blank(150);
+line(`<span class="c-green">[SAVE]</span> Guardando hall_of_fame.json  ... <span class="c-green">OK</span>`, 150);
+line(`<span class="c-green">[SAVE]</span> Guardando ga_results.json    ... <span class="c-green">OK</span>`, 100);
+blank(100);
+line(`<span class="c-green">[DONE]</span> Optimizacion completada en <span class="c-cyan">14m 37s</span>  |  <span class="c-yellow">2000 genomas evaluados</span>`, 200);
+line(`<span class="c-gray">       Mejor genoma listo para deploy en app.py</span>`, 80);
+blank(200);
+
+// Final prompt with blinking cursor
+totalDelay += 300;
+setTimeout(() => {
+  const d = document.createElement('div');
+  d.id = 'cursor-line';
+  d.innerHTML = `<span class="prompt">alumno@revolution:~/lab$</span>&nbsp;<span class="cursor"></span>`;
+  term.appendChild(d);
+  term.scrollTop = term.scrollHeight;
+}, totalDelay);
+
+</script>
+</body>
+</html>
